@@ -1,0 +1,28 @@
+{% if grants %}
+<div class="table-wrap">
+<table class="stack">
+  <thead><tr>{% if show_user %}<th>User</th>{% endif %}<th>Server</th><th>Client</th><th class="num">Authorized</th><th class="num">Last used</th><th class="num">Live</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+  <tbody>
+  {% for row in grants %}{% set g = row.grant %}
+  <tr>
+    {% if show_user %}<td><strong>{{ g.user.username }}</strong></td>{% endif %}
+    <td{% if not show_user %} class="name"{% endif %}>{{ g.server.name }}</td>
+    <td>{{ g.client.client_name or "Unnamed client" }}<span class="sub mono" title="{{ g.client_id }}">{{ g.client_id[:8] }}…</span></td>
+    <td class="num" data-label="Authorized">{{ g.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+    <td class="num" data-label="Last used">{{ g.last_used_at.strftime("%Y-%m-%d %H:%M") if g.last_used_at else "Never" }}</td>
+    <td class="num" data-label="Live">{{ row.sessions }}</td>
+    <td class="actions-cell">
+      <form method="post" action="/grants/{{ g.id }}/revoke">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="back" value="{{ back }}">
+        <button class="danger small" type="submit" data-confirm="Revoke {{ g.client.client_name or 'this client' }}'s access to {{ g.server.name }}? It will have to sign in again.">Revoke</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty"><p>No active grants. A grant appears when someone approves a client connection.</p></div>
+{% endif %}

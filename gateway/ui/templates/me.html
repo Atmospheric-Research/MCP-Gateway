@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}My account · MCP Gateway{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>My account</h1>
+    <p>Add a server to any MCP client that supports remote servers by giving it the connector URL. For example, in Claude paste it into Settings → Connectors, or run <code>claude mcp add --transport http &lt;name&gt; &lt;url&gt;</code>.</p>
+  </div>
+</div>
+{% if message %}<div class="notice" role="status">{{ message }}</div>{% endif %}
+
+<div class="section-head"><h2>My servers</h2><span class="count">{{ servers | length }}</span></div>
+{% if servers %}
+<div class="table-wrap">
+<table class="stack">
+  <thead><tr><th>Server</th><th>Connector URL</th></tr></thead>
+  <tbody>
+  {% for s in servers %}
+  <tr>
+    <td><strong>{{ s.name }}</strong>{% if s.description %}<span class="sub">{{ s.description }}</span>{% endif %}</td>
+    <td class="wide"><div class="connector"><code>{{ settings.resource_url(s.slug) }}</code>
+      <button type="button" data-copy="{{ settings.resource_url(s.slug) }}" aria-label="Copy connector URL for {{ s.name }}">Copy</button></div></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty"><p>You don't have access to any servers yet. Ask an administrator to grant it.</p></div>
+{% endif %}
+
+<section class="section">
+<div class="section-head"><h2>Authorized clients</h2></div>
+{% with show_user=False, back="/me" %}{% include "_grants_table.html" %}{% endwith %}
+</section>
+
+<section class="section">
+<form method="post" action="/me/password" class="form-section">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <header><h2>Change password</h2><p>At least 12 characters. Other UI sessions are signed out.</p></header>
+  <div class="fields">
+    <div class="field"><label for="current">Current password</label>
+      <input type="password" id="current" name="current" autocomplete="current-password" required></div>
+    <div class="field"><label for="new">New password</label>
+      <input type="password" id="new" name="new" autocomplete="new-password" minlength="12" required></div>
+    <div class="field"><label for="confirm">Confirm new password</label>
+      <input type="password" id="confirm" name="confirm" autocomplete="new-password" minlength="12" required></div>
+    <div class="button-row"><button type="submit">Change password</button></div>
+  </div>
+</form>
+</section>
+{% endblock %}

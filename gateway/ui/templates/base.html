@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MCP Gateway{% endblock %}</title>
+  <link rel="preload" href="/static/fonts/ibm-plex-sans-latin-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/theme.js"></script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' rx='5' fill='%235b4bc4'/%3E%3Cpath d='M5 10C9 10 10 5.5 14.5 5.5M5 10h9.5M5 10C9 10 10 14.5 14.5 14.5' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round'/%3E%3Ccircle cx='5' cy='10' r='2.2' fill='white'/%3E%3Ccircle cx='14.5' cy='5.5' r='1.8' fill='white'/%3E%3Ccircle cx='14.5' cy='10' r='1.8' fill='white'/%3E%3Ccircle cx='14.5' cy='14.5' r='1.8' fill='white'/%3E%3C/svg%3E">
+</head>
+{# One source fanning out to three servers: the gateway. `live` adds the sign-in animation. #}
+{% macro mark(size=22, live=false) %}<svg class="mark{{ ' live' if live }}" width="{{ size }}" height="{{ size }}" viewBox="0 0 20 20" aria-hidden="true">
+<rect width="20" height="20" rx="5" fill="currentColor"/>
+<g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path class="route" pathLength="1" d="M5 10C9 10 10 5.5 14.5 5.5"/><path class="route" pathLength="1" d="M5 10H14.5"/><path class="route" pathLength="1" d="M5 10C9 10 10 14.5 14.5 14.5"/></g>
+<g fill="#fff"><circle class="src" cx="5" cy="10" r="2.2"/><circle class="end" cx="14.5" cy="5.5" r="1.8"/><circle class="end" cx="14.5" cy="10" r="1.8"/><circle class="end" cx="14.5" cy="14.5" r="1.8"/></g>
+{% if live %}<g class="packets" fill="#fff"><circle r="1" opacity="0"><set attributeName="opacity" to="0.9" begin="1.6s"/><animateMotion dur="2.4s" begin="1.6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;0.45;1" calcMode="linear" path="M5 10C9 10 10 5.5 14.5 5.5"/></circle><circle r="1" opacity="0"><set attributeName="opacity" to="0.9" begin="2.4000000000000004s"/><animateMotion dur="2.4s" begin="2.4000000000000004s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;0.45;1" calcMode="linear" path="M5 10H14.5"/></circle><circle r="1" opacity="0"><set attributeName="opacity" to="0.9" begin="3.2s"/><animateMotion dur="2.4s" begin="3.2s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;0.45;1" calcMode="linear" path="M5 10C9 10 10 14.5 14.5 14.5"/></circle></g>{% endif %}
+</svg>{% endmacro %}
+{% macro theme_toggle() %}<button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
+<svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.6 5.6 0 0 1 6.4 2.5a5.6 5.6 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+<svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></g></svg>
+</button>{% endmacro %}
+{% if user and not bare %}
+{% set path = request.url.path %}
+{% macro navlink(href, label) %}<a href="{{ href }}"{% if path == href or path.startswith(href ~ '/') %} aria-current="page"{% endif %}>{{ label }}</a>{% endmacro %}
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="/">{{ mark() }}<span>MCP Gateway<small>{{ settings.public_url.split('://')[-1] }}</small></span></a>
+    <nav class="nav" aria-label="Main">
+      {% if user.is_admin %}
+      <div class="nav-group">Manage</div>
+      {{ navlink("/admin/servers", "Servers") }}
+      {{ navlink("/admin/users", "Users") }}
+      {{ navlink("/admin/grants", "Grants & sessions") }}
+      {{ navlink("/admin/audit", "Audit log") }}
+      <div class="nav-group">You</div>
+      {% endif %}
+      {{ navlink("/me", "My account") }}
+    </nav>
+    <div class="account">
+      <span class="avatar" aria-hidden="true">{{ user.username[:1] }}</span>
+      <span class="who"><strong>{{ user.username }}</strong><span class="muted">{{ "Administrator" if user.is_admin else "Member" }}</span></span>
+      {{ theme_toggle() }}
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="link" type="submit">Sign out</button>
+      </form>
+    </div>
+  </aside>
+  <main class="sheet"><div class="content">
+{% block content %}{% endblock %}
+  </div></main>
+</div>
+{% else %}
+<body class="bare {% block body_class %}{% endblock %}">
+{{ theme_toggle() }}
+<main class="bare-inner">
+  <div class="brand">{{ mark(44, live=true) if self.body_class() == 'login' else mark() }}<span>MCP Gateway</span></div>
+{% block bare %}<div class="card">{{ self.content() }}</div>{% endblock %}
+</main>
+{% endif %}
+<script src="/static/app.js"></script>
+</body>
+</html>

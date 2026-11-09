@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Audit log · MCP Gateway{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Audit log</h1>
+    <p>{{ "{:,}".format(total) }} event{{ "" if total == 1 else "s" }}. Kept for {{ retention }} days; a JSONL copy in <code>{{ settings.log_dir }}</code> rotates at midnight. Times are UTC.</p>
+  </div>
+</div>
+<form method="get" class="filters">
+  <div><label for="username">User</label><input type="text" id="username" name="username" value="{{ filters.username }}" autocapitalize="none"></div>
+  <div><label for="server">Server slug</label><input type="text" id="server" name="server" value="{{ filters.server }}" autocapitalize="none"></div>
+  <div><label for="event">Event</label>
+    <select id="event" name="event"><option value="">Any event</option>
+      {% for e in event_names %}<option {% if e == filters.event %}selected{% endif %}>{{ e }}</option>{% endfor %}
+    </select></div>
+  <div><label for="ip">IP</label><input type="text" id="ip" name="ip" value="{{ filters.ip }}" autocapitalize="none" spellcheck="false"></div>
+  <div><label for="since">Since</label><input type="datetime-local" id="since" name="since" value="{{ filters.since }}"></div>
+  <div class="button-row"><button type="submit" class="secondary">Filter</button>{% if filters.values() | select | list %}<a class="muted" href="/admin/audit">Clear</a>{% endif %}</div>
+</form>
+<div class="table-wrap">
+<table class="stack">
+  <thead><tr><th>Time</th><th>Event</th><th>User</th><th>Server</th><th>IP</th><th>Detail</th></tr></thead>
+  <tbody>
+  {% for e in events %}
+  {% set bad = e.event.endswith(("_failed", "_blocked", "_denied", "_reuse")) or "reuse" in e.event %}
+  <tr>
+    <td class="nowrap">{{ e.ts.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+    <td><span class="pill plain{{ ' bad' if bad }}">{{ e.event }}</span></td>
+    <td>{{ e.username or (e.user_id or "—") }}</td>
+    <td class="mono">{{ e.server_slug or "—" }}</td>
+    <td class="mono">{{ e.ip or "—" }}</td>
+    <td class="mono muted">{% if e.detail %}{% for k, v in e.detail.items() %}{{ k }}={{ v }} {% endfor %}{% endif %}{% if e.client_id %}client={{ e.client_id[:8] }}{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="muted">No events match these filters.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if pages > 1 %}
+<nav class="pager" aria-label="Pages">
+  {% if page > 1 %}<a href="?{{ filters | urlencode }}&page={{ page - 1 }}">← Newer</a>{% endif %}
+  <span class="muted">Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a href="?{{ filters | urlencode }}&page={{ page + 1 }}">Older →</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

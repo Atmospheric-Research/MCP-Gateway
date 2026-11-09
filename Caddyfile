@@ -1,0 +1,6 @@
+{$GATEWAY_DOMAIN} {
+	reverse_proxy gateway:8000 {
+		# MCP responses are SSE streams; pass every event through immediately.
+		flush_interval -1
+	}
+}

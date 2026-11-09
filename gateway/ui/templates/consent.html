@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% set bare = true %}
+{% block title %}Authorize · MCP Gateway{% endblock %}
+{% block content %}
+<h1>Authorize connection</h1>
+<p class="lede muted">Signed in as <strong>{{ user.username }}</strong>.</p>
+<form method="post" action="/consent">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="req" value="{{ req }}">
+  <div class="consent-flow">
+    <div><strong>{{ client.client_name or "Unnamed client" }}</strong><span>wants to use</span></div>
+    <svg class="arrow" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+    <div><strong>{{ server.name }}</strong><span class="mono">/s/{{ server.slug }}/mcp</span></div>
+  </div>
+  <p class="hint">After you approve, you'll be sent back to <code>{{ redirect_uri }}</code>. Only continue if you just started this connection from your MCP client.</p>
+  {% if allowed %}
+  <div class="button-row">
+    <button type="submit" name="action" value="deny" class="secondary">Deny</button>
+    <button type="submit" name="action" value="approve">Allow</button>
+  </div>
+  {% else %}
+  <div class="notice error">Your account doesn't have access to this server. Ask an administrator to grant it.</div>
+  <div class="button-row"><button type="submit" name="action" value="deny" class="secondary">Return to client</button></div>
+  {% endif %}
+</form>
+{% endblock %}

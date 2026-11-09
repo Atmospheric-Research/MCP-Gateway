@@ -1,0 +1,6 @@
+[project]
+name = "echo-server"
+version = "0.1.0"
+description = "Tiny stdio MCP server for testing the gateway"
+requires-python = ">=3.12"
+dependencies = ["mcp==2.3.0"]

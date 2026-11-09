@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Grants &amp; sessions · MCP Gateway{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Grants &amp; sessions</h1>
+    <p>A grant is one user's approval of one MCP client for one server. Revoking it kills its tokens and ends its live sessions. Times are UTC.</p>
+  </div>
+</div>
+
+<div class="section-head"><h2>Active grants</h2><span class="count">{{ grants | length }}</span></div>
+{% with show_user=True, back="/admin/grants" %}{% include "_grants_table.html" %}{% endwith %}
+
+<section class="section">
+<div class="section-head"><h2>Live sessions</h2><span class="count">{{ sessions | length }}</span></div>
+{% if sessions %}
+<div class="table-wrap">
+<table class="stack">
+  <thead><tr><th>User</th><th>Server</th><th class="num">Started</th><th class="num">Last request</th><th>From</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+  <tbody>
+  {% for s in sessions %}
+  <tr>
+    <td><strong>{{ s.username }}</strong></td>
+    <td class="mono">{{ s.server_slug }}</td>
+    <td class="num" data-label="Started">{{ s.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+    <td class="num" data-label="Last">{{ s.last_seen.strftime("%H:%M:%S") }}</td>
+    <td><span class="mono">{{ s.ip or "—" }}</span><span class="sub">{{ (s.user_agent or "")[:60] }}</span></td>
+    <td class="actions-cell">
+      <form method="post" action="/admin/sessions/{{ s.id }}/close">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="danger small" type="submit">End</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty"><p>No live sessions. Sessions idle for {{ (settings.session_idle_timeout // 60) | int }} minutes are closed.</p></div>
+{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Servers · MCP Gateway{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Servers</h1>
+    <p>{{ servers | length }} server{{ "" if servers | length == 1 else "s" }}, each exposed as its own connector.</p>
+  </div>
+  <a class="button" href="/admin/servers/new">Add server</a>
+</div>
+{% if servers %}
+<div class="table-wrap">
+<table class="stack">
+  <thead><tr><th>Server</th><th>Connector URL</th><th>Status</th><th class="num">Users</th><th class="num">Live sessions</th></tr></thead>
+  <tbody>
+  {% for s in servers %}
+  <tr>
+    <td><a class="name" href="/admin/servers/{{ s.id }}">{{ s.name }}</a><span class="sub mono">{% if s.kind == "remote" %}{{ s.url }}{% elif s.kind == "package" %}{{ s.args | join(" ") }}{% else %}{{ s.directory }} → {{ s.args | join(" ") }}{% endif %}</span></td>
+    <td class="wide"><div class="url-inline"><code>{{ settings.resource_url(s.slug) }}</code>
+      <button class="secondary small" type="button" data-copy="{{ settings.resource_url(s.slug) }}" aria-label="Copy connector URL for {{ s.name }}">Copy</button></div></td>
+    <td>{% if s.enabled %}<span class="pill on">Enabled</span>{% else %}<span class="pill">Disabled</span>{% endif %}</td>
+    <td class="num" data-label="Users">{{ s.users | length }}</td>
+    <td class="num" data-label="Live">{{ live.get(s.id, 0) }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty"><p>No servers yet. Add one: upload a zipped uv project with a <code>uv.lock</code>, or use a published package or remote URL.</p></div>
+{% endif %}
+{% endblock %}
