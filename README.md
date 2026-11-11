@@ -132,7 +132,8 @@ Everything is set through environment variables in `.env`. Only the first two ar
 
 ## Data and maintenance
 
-Everything lives in `./data`: the SQLite database, uploaded servers, package caches and logs.
+Everything lives in the `gateway-data` Docker volume, mounted at `/data`: the SQLite database, uploaded servers,
+package caches and logs.
 
 - `data/logs/audit.jsonl`: audit log file, rotated at midnight and kept for `GATEWAY_AUDIT_RETENTION_DAYS` days.
 - `data/logs/servers/<slug>.log`: each server's error output.

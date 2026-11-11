@@ -8,6 +8,10 @@ services:
       GATEWAY_PUBLIC_URL: ${GATEWAY_PUBLIC_URL:?set GATEWAY_PUBLIC_URL}
       GATEWAY_SECRET_KEY: ${GATEWAY_SECRET_KEY:?set GATEWAY_SECRET_KEY}
     volumes:
-      - ./data:/data
+      # Named volume: Docker seeds it from the image, so /data stays owned by the non-root gateway user.
+      - gateway-data:/data
     expose:
       - "8000"
+
+volumes:
+  gateway-data:
