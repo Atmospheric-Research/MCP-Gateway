@@ -3,8 +3,11 @@ services:
     build: .
     restart: unless-stopped
     env_file: .env
+    # Referenced explicitly so PaaS UIs (e.g. Coolify) pass them in and compose fails fast when unset.
+    environment:
+      GATEWAY_PUBLIC_URL: ${GATEWAY_PUBLIC_URL:?set GATEWAY_PUBLIC_URL}
+      GATEWAY_SECRET_KEY: ${GATEWAY_SECRET_KEY:?set GATEWAY_SECRET_KEY}
     volumes:
       - ./data:/data
-    # No host ports: Coolify's Traefik routes the domain to this container's port 8000.
     expose:
       - "8000"
