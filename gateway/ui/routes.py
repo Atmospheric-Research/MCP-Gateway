@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from mcp.server.auth.provider import AuthorizationParams, construct_redirect_uri
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import selectinload
 from starlette.datastructures import UploadFile
 
@@ -317,6 +317,8 @@ async def _server_from_form(request: Request, server: Server) -> str | None:
         return "Package command must start with uvx or npx (e.g. uvx mcp-server-fetch)."
     if kind == "remote" and not _remote_url_ok(url or ""):
         return "URL must be https:// (http:// is allowed only for localhost)."
+    if (server.kind, server.directory, server.url, server.args) != (kind, directory, url, args):
+        server.tools = None  # a different program may expose different tools; the edit page re-tests
     server.slug, server.name, server.kind, server.directory, server.url, server.args = slug, name, kind, directory, url, args
     server.description = str(form.get("description", "")).strip()
     server.enabled = _checked(form, "enabled")
@@ -417,6 +419,8 @@ async def server_test(request: Request, server_id: int, user: User = Depends(req
         return JSONResponse({"ok": False, "error": "Not found"}, status_code=404)
     try:
         result = await probe_server(server)
+        async with session_scope() as db:
+            await db.execute(update(Server).where(Server.id == server_id).values(tools=result["tools"]))
         for tool in result["tools"]:
             tool["enabled"] = tool["name"] not in (server.disabled_tools or ())
     except Exception as e:  # surfaced to the admin verbatim, together with the server's stderr

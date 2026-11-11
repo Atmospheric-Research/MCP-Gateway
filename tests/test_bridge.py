@@ -252,7 +252,13 @@ async def test_disabled_tools_hidden_and_refused(client):
     page = await client.get("/login")
     await client.post("/login", data={"csrf": _csrf(page.text), "username": "root", "password": PASSWORD, "next": "/"})
     page = await client.get(f"/admin/servers/{server_id}")
-    assert 'name="tools" value="whoami"' in page.text
+    assert 'name="tools" value="whoami"' in page.text and "data-autotest" in page.text
+    # Testing caches the tool list, so it survives a reload.
+    r = await client.post(f"/admin/servers/{server_id}/test", headers={"X-CSRF-Token": _csrf(page.text)})
+    assert r.json()["ok"], r.text
+    page = await client.get(f"/admin/servers/{server_id}")
+    assert 'name="tool_enabled" value="echo" checked' in page.text and "data-autotest" not in page.text
+    assert page.text.count('name="tools" value="whoami"') == 1
     r = await client.post(f"/admin/servers/{server_id}", data={
         "csrf": _csrf(page.text), "name": "Echo", "slug": "echo", "kind": "upload",
         "entry": "server.py", "enabled": "on", "tools": ["echo", "whoami"], "tool_enabled": ["whoami"],

@@ -19,7 +19,7 @@
       <div class="connector"><code>{{ settings.resource_url(server.slug) }}</code>
         <button type="button" data-copy="{{ settings.resource_url(server.slug) }}">Copy</button></div>
     </div>
-    <button type="button" class="secondary" data-test-url="/admin/servers/{{ server.id }}/test" data-csrf="{{ csrf }}">Test server</button>
+    <button type="button" class="secondary" data-test-url="/admin/servers/{{ server.id }}/test" data-csrf="{{ csrf }}"{% if server.tools is none %} data-autotest{% endif %}>Test server</button>
   </div>
   <p class="hint" style="margin: 10px 0 0">Testing starts the server once and runs initialize and tools/list. It also pre-builds the venv, so the first client connection is fast.</p>
   <pre id="test-result" hidden aria-live="polite"></pre>
@@ -109,9 +109,11 @@
     <header><h2>Tools</h2><p>Turned-off tools are hidden from clients and refused if called. Click <strong>Test server</strong> to list every tool; new tools start on.</p></header>
     <div class="fields">
       <div class="check-list" id="tool-list">
-        {% for name in server.disabled_tools or [] %}<label class="check"><input type="hidden" name="tools" value="{{ name }}"><input type="checkbox" role="switch" name="tool_enabled" value="{{ name }}"> <span><code>{{ name }}</code></span></label>{% endfor %}
+        {% set known = (server.tools or []) | map(attribute="name") | list %}
+        {% for t in server.tools or [] %}<label class="check"><input type="hidden" name="tools" value="{{ t.name }}"><input type="checkbox" role="switch" name="tool_enabled" value="{{ t.name }}"{% if t.name not in (server.disabled_tools or []) %} checked{% endif %}> <span><code>{{ t.name }}</code>{% if t.description %}<small>{{ t.description.split("\n")[0] }}</small>{% endif %}</span></label>{% endfor %}
+        {% for name in server.disabled_tools or [] if name not in known %}<label class="check"><input type="hidden" name="tools" value="{{ name }}"><input type="checkbox" role="switch" name="tool_enabled" value="{{ name }}"> <span><code>{{ name }}</code></span></label>{% endfor %}
       </div>
-      {% if not server.disabled_tools %}<p class="hint" id="tool-list-empty">All tools are on.</p>{% endif %}
+      {% if not server.tools and not server.disabled_tools %}<p class="hint" id="tool-list-empty">All tools are on.</p>{% endif %}
     </div>
   </section>
   {% endif %}

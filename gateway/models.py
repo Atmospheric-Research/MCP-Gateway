@@ -63,6 +63,8 @@ class Server(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     # Tool names hidden from tools/list and refused on tools/call; new upstream tools start enabled.
     disabled_tools: Mapped[list[str]] = mapped_column(JSON, default=list, server_default="[]")
+    # [{"name", "description"}] from the last successful Test; None until tested or after the launch config changes.
+    tools: Mapped[list[dict[str, str]] | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     users: Mapped[list[User]] = relationship(secondary="user_server_access", back_populates="servers")

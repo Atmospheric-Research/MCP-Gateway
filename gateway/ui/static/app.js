@@ -52,6 +52,9 @@ document.addEventListener("click", async (event) => {
   }
 });
 
+// Server edit page: test automatically when no tool list is cached yet (new or re-deployed server).
+document.querySelector("[data-autotest]")?.click();
+
 // Server form: show only the fields of the chosen kind; disabled fields are neither validated nor submitted.
 document.addEventListener("change", (event) => {
   if (event.target.name !== "kind") return;
