@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+import anyio
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
@@ -18,7 +19,7 @@ from starlette.datastructures import UploadFile
 
 from gateway import audit
 from gateway.bridge.probe import probe_server, tail_server_log
-from gateway.bridge.process import PACKAGE_RUNNERS, ServerConfigError, resolve_directory
+from gateway.bridge.process import PACKAGE_RUNNERS, ServerConfigError, remove_server_files, resolve_directory
 from gateway.bridge.registry import get_registry
 from gateway.config import get_settings
 from gateway.crypto import decrypt_env, encrypt_env, hash_password, verify_password
@@ -399,9 +400,10 @@ async def server_delete(request: Request, server_id: int, user: User = Depends(r
         server = await db.get(Server, server_id)
         if server is None:
             return redirect("/admin/servers")
-        slug = server.slug
+        slug, directory = server.slug, server.directory
         await db.delete(server)
     await get_registry().close_where(lambda s: s.server_id == server_id, reason="server_deleted")
+    await anyio.to_thread.run_sync(remove_server_files, slug, directory)  # after close_where: nothing runs from them
     await audit.record("server_deleted", conn=request, user_id=user.id, username=user.username, server_slug=slug)
     return redirect("/admin/servers")
 

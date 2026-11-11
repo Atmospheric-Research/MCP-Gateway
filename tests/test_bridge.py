@@ -304,3 +304,14 @@ async def test_admin_form_zip_upload(client, settings, tmp_path):
     assert r.status_code == 303, r.text
     async with session_scope() as db:
         assert (await db.get(Server, server.id)).directory == server.directory
+
+    # Deleting the server removes its upload, venv and log.
+    from gateway.bridge.process import server_log_path
+    venv = settings.server_uv_dir / "venvs" / server.slug
+    venv.mkdir(parents=True)
+    server_log_path(server.slug).write_text("x")
+    page = await client.get(f"/admin/servers/{server.id}")
+    r = await client.post(f"/admin/servers/{server.id}/delete", data={"csrf": _csrf(page.text)})
+    assert r.status_code == 303
+    assert not path.parent.exists() and not venv.exists() and not server_log_path(server.slug).exists()
+    assert settings.uploads_dir.exists()

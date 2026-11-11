@@ -1,6 +1,7 @@
 """How a registered server is turned into a subprocess."""
 
 import os
+import shutil
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -91,6 +92,18 @@ def server_log_path(slug: str, settings: Settings | None = None) -> Path:
     log_dir = settings.log_dir / "servers"
     log_dir.mkdir(parents=True, exist_ok=True)
     return log_dir / f"{slug}.log"
+
+
+def remove_server_files(slug: str, directory: str) -> None:
+    """Delete a server's upload folder, venv and log. The uv cache and Python installs are shared, so they stay."""
+    settings = get_settings()
+    shutil.rmtree(settings.server_uv_dir / "venvs" / slug, ignore_errors=True)
+    server_log_path(slug).unlink(missing_ok=True)
+    if directory:
+        root = settings.uploads_dir.resolve()
+        upload = (root / Path(directory).parts[0]).resolve()  # the zip's top folder, not the source subfolder
+        if upload.parent == root:
+            shutil.rmtree(upload, ignore_errors=True)
 
 
 def open_server_log(slug: str):  # type: ignore[no-untyped-def]
