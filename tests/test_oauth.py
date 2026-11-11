@@ -210,3 +210,16 @@ async def test_login_throttle(client):
         assert r.status_code == 401
     r = await client.post("/login", data={"csrf": _csrf(page.text), "username": "alice", "password": PASSWORD})
     assert r.status_code == 429
+
+
+def test_client_ip_prefers_cloudflare_header():
+    from starlette.requests import Request
+
+    from gateway.audit import client_ip
+
+    def req(headers):
+        return Request({"type": "http", "headers": [(k.encode(), v.encode()) for k, v in headers.items()], "client": ("10.0.0.5", 1)})
+
+    assert client_ip(req({"cf-connecting-ip": "1.2.3.4", "x-forwarded-for": "172.18.0.2"})) == "1.2.3.4"
+    assert client_ip(req({"x-forwarded-for": "5.6.7.8, 172.18.0.2"})) == "5.6.7.8"
+    assert client_ip(req({})) == "10.0.0.5"

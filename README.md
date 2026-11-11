@@ -5,15 +5,15 @@ connector at `https://<domain>/s/<slug>/mcp`. Any MCP client that supports remot
 Claude Desktop/claude.ai, Claude Code) signs in through the gateway's OAuth 2.1 server (dynamic client registration + PKCE). Each connection gets a fresh subprocess.
 
 ```
-Client ──HTTPS──> Caddy ──> gateway:8000 ─┬─ OAuth AS   /.well-known/oauth-authorization-server, /authorize, /token, /register, /revoke
-                                          ├─ per server /.well-known/oauth-protected-resource/s/<slug>/mcp
-                                          ├─ /s/<slug>/mcp  ── one `uv run` subprocess per MCP session
-                                          └─ admin UI   /login, /consent, /admin/*, /me
+Client ─HTTPS─> Cloudflare ─tunnel─> Traefik ─> gateway:8000 ─┬─ OAuth AS   /.well-known/oauth-authorization-server, /authorize, /token, /register, /revoke
+                                                              ├─ per server /.well-known/oauth-protected-resource/s/<slug>/mcp
+                                                              ├─ /s/<slug>/mcp  ── one `uv run` subprocess per MCP session
+                                                              └─ admin UI   /login, /consent, /admin/*, /me
 ```
 
 ## Deploy
 
-1. `cp .env.example .env`, then set `GATEWAY_PUBLIC_URL` and `GATEWAY_DOMAIN` and point DNS at the host.
+1. `cp .env.example .env`, then set `GATEWAY_PUBLIC_URL` (the https URL of your Cloudflare Tunnel hostname).
 2. `docker compose run --rm gateway python -m gateway generate-key` → put the result in `GATEWAY_SECRET_KEY`.
    Keep the key safe. It encrypts server env vars and signs UI sessions.
 3. `mkdir -p data && sudo chown 1000:1000 data` (the container runs as uid 1000).

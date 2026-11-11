@@ -46,8 +46,9 @@ def setup_audit_file() -> None:
 def client_ip(conn: HTTPConnection | None) -> str | None:
     if conn is None:
         return None
-    # Caddy is the only hop in front of us and sets X-Forwarded-For.
-    forwarded = conn.headers.get("x-forwarded-for")
+    # Cloudflare Tunnel sets CF-Connecting-IP to the real client; X-Forwarded-For only holds the tunnel's IP
+    # once Traefik has rewritten it.
+    forwarded = conn.headers.get("cf-connecting-ip") or conn.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[0].strip()
     return conn.client.host if conn.client else None
