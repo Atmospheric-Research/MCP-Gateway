@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import port with context %}
 {% block title %}My account · MCP Gateway{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -18,8 +19,7 @@
   {% for s in servers %}
   <tr>
     <td><strong>{{ s.name }}</strong>{% if s.description %}<span class="sub">{{ s.description }}</span>{% endif %}</td>
-    <td class="wide"><div class="connector"><code>{{ settings.resource_url(s.slug) }}</code>
-      <button type="button" data-copy="{{ settings.resource_url(s.slug) }}" aria-label="Copy connector URL for {{ s.name }}">Copy</button></div></td>
+    <td class="wide">{{ port(s.slug, s.name) }}</td>
   </tr>
   {% endfor %}
   </tbody>

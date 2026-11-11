@@ -1,27 +1,26 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon, port, led with context %}
 {% block title %}{{ server.name or "New server" }} · MCP Gateway{% endblock %}
 {% block content %}
 <div class="page-head">
   <div>
-    <a class="crumb" href="/admin/servers">← Servers</a>
-    <h1>{{ server.name if server.id else "Add server" }}</h1>
-    {% if not server.id %}<p>Register an uploaded uv project, a published package or a remote MCP URL as a connector.</p>{% endif %}
+    <a class="crumb" href="/admin/servers">{{ icon("back") }}Servers</a>
+    <div class="title-row"><h1>{{ server.name if server.id else "Add server" }}</h1>{% if server.id %}{{ led(server.enabled, "Enabled" if server.enabled else "Disabled") }}{% endif %}</div>
+    {% if not server.id %}<p>Register an uploaded uv project, a published package or a remote MCP URL as a connector</p>{% endif %}
   </div>
-  {% if server.id %}{% if server.enabled %}<span class="pill on">Enabled</span>{% else %}<span class="pill">Disabled</span>{% endif %}{% endif %}
 </div>
 {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
 
 {% if server.id %}
-<div class="panel" style="margin-bottom: 40px">
+<div class="panel">
   <div class="panel-grid">
     <div>
       <span class="field-label">Connector URL</span>
-      <div class="connector"><code>{{ settings.resource_url(server.slug) }}</code>
-        <button type="button" data-copy="{{ settings.resource_url(server.slug) }}">Copy</button></div>
+      {{ port(server.slug, server.name) }}
     </div>
-    <button type="button" class="secondary" data-test-url="/admin/servers/{{ server.id }}/test" data-csrf="{{ csrf }}"{% if server.tools is none %} data-autotest{% endif %}>Test server</button>
+    <button type="button" class="secondary" data-test-url="/admin/servers/{{ server.id }}/test" data-csrf="{{ csrf }}"{% if server.tools is none %} data-autotest{% endif %}>{{ icon("play") }}Test server</button>
   </div>
-  <p class="hint" style="margin: 10px 0 0">Testing starts the server once and runs initialize and tools/list. It also pre-builds the venv, so the first client connection is fast.</p>
+  <p class="hint">Testing starts the server once and runs initialize and tools/list. It also pre-builds the venv, so the first client connection is fast.</p>
   <pre id="test-result" hidden aria-live="polite"></pre>
 </div>
 {% endif %}
@@ -29,7 +28,7 @@
 <form method="post" enctype="multipart/form-data">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <section class="form-section">
-    <header><h2>Identity</h2><p>How the server appears to users and where its connector lives.</p></header>
+    <header><h2>Identity</h2><p>How the server appears to users and where its connector lives</p></header>
     <div class="fields">
       <div class="field"><label for="name">Display name</label>
         <input type="text" id="name" name="name" value="{{ server.name or '' }}" required></div>
@@ -49,13 +48,13 @@
       <fieldset class="field"><legend class="field-label">Kind</legend>
         <div class="kind-picker">
           <label class="kind-tile"><input type="radio" name="kind" value="upload" {% if kind == "upload" %}checked{% endif %}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg>
+            {{ icon("archive") }}
             <strong>Upload zip</strong><small>A zipped uv project, unpacked and run here</small></label>
           <label class="kind-tile"><input type="radio" name="kind" value="package" {% if kind == "package" %}checked{% endif %}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 9-4 3 4 3M16 9l4 3-4 3M13.5 6l-3 12"/></svg>
+            {{ icon("package") }}
             <strong>Published package</strong><small>Run from PyPI or npm with <code>uvx</code> or <code>npx</code></small></label>
           <label class="kind-tile"><input type="radio" name="kind" value="remote" {% if kind == "remote" %}checked{% endif %}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.5 5.7 3.5 9s-1 6.3-3.5 9c-2.5-2.7-3.5-5.7-3.5-9s1-6.3 3.5-9z"/></svg>
+            {{ icon("globe") }}
             <strong>Remote URL</strong><small>Already hosted over streamable HTTP</small></label>
         </div>
       </fieldset>
@@ -63,7 +62,7 @@
         <div class="field"><label for="archive">Zip file</label>
           <div class="dropzone{% if has_files %} has-files{% endif %}">
             <input type="file" id="archive" name="archive" accept=".zip,application/zip" {% if not has_files %}required{% endif %} aria-describedby="archive-hint" {% if kind != "upload" %}disabled{% endif %}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+            {{ icon("upload") }}
             <span class="dropzone-title" data-file-name>{% if has_files %}Drop a new .zip to replace the files{% else %}Drop a .zip here, or <u>browse</u>{% endif %}</span>
             <span class="hint" id="archive-hint" data-file-meta>{% if has_files %}Current files: <code>{{ server.directory }}</code>{% else %}Up to 200 MB unpacked. Must include a <code>uv.lock</code>.{% endif %}</span>
           </div></div>
@@ -106,7 +105,7 @@
 
   {% if server.id %}
   <section class="form-section">
-    <header><h2>Tools</h2><p>Turned-off tools are hidden from clients and refused if called. Click <strong>Test server</strong> to list every tool; new tools start on.</p></header>
+    <header><h2>Tools</h2><p>Turned-off tools are hidden from clients and refused if called. Run <strong>Test server</strong> to list every tool; new tools start on.</p></header>
     <div class="fields">
       <div class="check-list" id="tool-list">
         {% set known = (server.tools or []) | map(attribute="name") | list %}
@@ -119,7 +118,7 @@
   {% endif %}
 
   <section class="form-section">
-    <header><h2>Availability</h2><p>Disabled servers reject every MCP request until re-enabled.</p></header>
+    <header><h2>Availability</h2><p>Disabled servers reject every MCP request until re-enabled</p></header>
     <div class="fields">
       <label class="check"><input type="checkbox" name="enabled" {% if server.enabled %}checked{% endif %}> <span>Enabled</span></label>
     </div>
@@ -136,7 +135,7 @@
 </section>
 {% endif %}
 <div class="danger-zone">
-  <div><strong>Delete this server</strong><p>Removes the server, its grants and every user's access. Live sessions end.</p></div>
+  <div><h2>Delete this server</h2><p>Removes the server, its grants and every user's access. Live sessions end.</p></div>
   <form method="post" action="/admin/servers/{{ server.id }}/delete">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <button class="danger" type="submit" data-confirm="Delete {{ server.name }} and all its grants?">Delete server</button>

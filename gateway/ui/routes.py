@@ -1,3 +1,4 @@
+import hashlib
 import re
 import secrets
 import shlex
@@ -44,6 +45,10 @@ AUDIT_PAGE_SIZE = 100
 MAX_UPLOAD_UNZIPPED = 200 * 1024 * 1024
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
+# Cache-buster for /static links, so a deploy never pairs new markup with a cached old stylesheet.
+templates.env.globals["asset_v"] = hashlib.sha256(
+    b"".join(p.read_bytes() for p in sorted((Path(__file__).parent / "static").glob("*.*")))
+).hexdigest()[:10]
 router = APIRouter()
 
 

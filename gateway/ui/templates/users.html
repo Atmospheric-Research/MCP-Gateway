@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon, led %}
 {% block title %}Users · MCP Gateway{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -6,7 +7,7 @@
     <h1>Users</h1>
     <p>{{ users | length }} account{{ "" if users | length == 1 else "s" }}. Administrators can use every server.</p>
   </div>
-  <a class="button" href="/admin/users/new">Add user</a>
+  <a class="button" href="/admin/users/new">{{ icon("plus") }}Add user</a>
 </div>
 <div class="table-wrap">
 <table class="stack">
@@ -16,7 +17,7 @@
   <tr>
     <td><a class="name" href="/admin/users/{{ u.id }}">{{ u.username }}</a></td>
     <td>{{ "Administrator" if u.is_admin else "Member" }}</td>
-    <td>{% if u.is_active %}<span class="pill on">Active</span>{% else %}<span class="pill">Disabled</span>{% endif %}</td>
+    <td>{{ led(u.is_active, "Active" if u.is_active else "Disabled") }}</td>
     <td>{% if u.is_admin %}<span class="muted">All servers</span>{% else %}{{ u.servers | map(attribute="name") | join(", ") or "—" }}{% endif %}</td>
   </tr>
   {% endfor %}

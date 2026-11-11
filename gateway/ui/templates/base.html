@@ -5,61 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}MCP Gateway{% endblock %}</title>
   <link rel="preload" href="/static/fonts/ibm-plex-sans-latin-400.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/static/app.css">
-  <script src="/static/theme.js"></script>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' rx='5' fill='%235b4bc4'/%3E%3Cpath d='M5 10C9 10 10 5.5 14.5 5.5M5 10h9.5M5 10C9 10 10 14.5 14.5 14.5' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round'/%3E%3Ccircle cx='5' cy='10' r='2.2' fill='white'/%3E%3Ccircle cx='14.5' cy='5.5' r='1.8' fill='white'/%3E%3Ccircle cx='14.5' cy='10' r='1.8' fill='white'/%3E%3Ccircle cx='14.5' cy='14.5' r='1.8' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/app.css?v={{ asset_v }}">
+  <script src="/static/theme.js?v={{ asset_v }}"></script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' rx='4' fill='%23141415'/%3E%3Cg fill='none' stroke='%23e8a33a' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M5 10C9 10 10 5.5 14.5 5.5M5 10h9.5M5 10C9 10 10 14.5 14.5 14.5'/%3E%3C/g%3E%3Cg fill='%23e8a33a'%3E%3Ccircle cx='5' cy='10' r='2'/%3E%3Crect x='13' y='4' width='3' height='3' rx='.6'/%3E%3Crect x='13' y='8.5' width='3' height='3' rx='.6'/%3E%3Crect x='13' y='13' width='3' height='3' rx='.6'/%3E%3C/g%3E%3C/svg%3E">
 </head>
-{# One source fanning out to three servers: the gateway. `live` adds the sign-in animation. #}
-{% macro mark(size=22, live=false) %}<svg class="mark{{ ' live' if live }}" width="{{ size }}" height="{{ size }}" viewBox="0 0 20 20" aria-hidden="true">
-<rect width="20" height="20" rx="5" fill="currentColor"/>
-<g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path class="route" pathLength="1" d="M5 10C9 10 10 5.5 14.5 5.5"/><path class="route" pathLength="1" d="M5 10H14.5"/><path class="route" pathLength="1" d="M5 10C9 10 10 14.5 14.5 14.5"/></g>
-<g fill="#fff"><circle class="src" cx="5" cy="10" r="2.2"/><circle class="end" cx="14.5" cy="5.5" r="1.8"/><circle class="end" cx="14.5" cy="10" r="1.8"/><circle class="end" cx="14.5" cy="14.5" r="1.8"/></g>
-{% if live %}<g class="packets" fill="#fff"><circle r="1" opacity="0"><set attributeName="opacity" to="0.9" begin="1.6s"/><animateMotion dur="2.4s" begin="1.6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;0.45;1" calcMode="linear" path="M5 10C9 10 10 5.5 14.5 5.5"/></circle><circle r="1" opacity="0"><set attributeName="opacity" to="0.9" begin="2.4000000000000004s"/><animateMotion dur="2.4s" begin="2.4000000000000004s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;0.45;1" calcMode="linear" path="M5 10H14.5"/></circle><circle r="1" opacity="0"><set attributeName="opacity" to="0.9" begin="3.2s"/><animateMotion dur="2.4s" begin="3.2s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;0.45;1" calcMode="linear" path="M5 10C9 10 10 14.5 14.5 14.5"/></circle></g>{% endif %}
-</svg>{% endmacro %}
-{% macro theme_toggle() %}<button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
-<svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.6 5.6 0 0 1 6.4 2.5a5.6 5.6 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-<svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></g></svg>
+{% from "_macros.html" import mark, icon with context %}
+{% macro theme_toggle() %}<button class="icon-button" type="button" data-theme-toggle aria-label="Switch light or dark theme" title="Switch theme">
+<svg class="i moon" aria-hidden="true"><use href="#i-moon"/></svg><svg class="i sun" aria-hidden="true"><use href="#i-sun"/></svg>
 </button>{% endmacro %}
+<body class="{% if not (user and not bare) %}bare {% endif %}{% block body_class %}{% endblock %}">
+{# Lucide icons (ISC), inlined once and referenced with <use>. #}
+<svg class="sprite" aria-hidden="true">
+  <defs>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01M6 18h.01"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5"/></symbol>
+    <symbol id="i-log" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8M10 9H8"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 3 20 12 6 21Z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  </defs>
+</svg>
 {% if user and not bare %}
 {% set path = request.url.path %}
-{% macro navlink(href, label) %}<a href="{{ href }}"{% if path == href or path.startswith(href ~ '/') %} aria-current="page"{% endif %}>{{ label }}</a>{% endmacro %}
-<body>
+{% macro navlink(href, label, ic) %}<a href="{{ href }}"{% if path == href or path.startswith(href ~ '/') %} aria-current="page"{% endif %}>{{ icon(ic) }}<span>{{ label }}</span></a>{% endmacro %}
 <div class="shell">
   <aside class="sidebar">
     <a class="brand" href="/">{{ mark() }}<span>MCP Gateway<small>{{ settings.public_url.split('://')[-1] }}</small></span></a>
     <nav class="nav" aria-label="Main">
       {% if user.is_admin %}
-      <div class="nav-group">Manage</div>
-      {{ navlink("/admin/servers", "Servers") }}
-      {{ navlink("/admin/users", "Users") }}
-      {{ navlink("/admin/grants", "Grants & sessions") }}
-      {{ navlink("/admin/audit", "Audit log") }}
-      <div class="nav-group">You</div>
+      <div class="nav-group">
+        <div class="nav-label">Manage</div>
+        {{ navlink("/admin/servers", "Servers", "server") }}
+        {{ navlink("/admin/users", "Users", "users") }}
+        {{ navlink("/admin/grants", "Grants & sessions", "key") }}
+        {{ navlink("/admin/audit", "Audit log", "log") }}
+      </div>
       {% endif %}
-      {{ navlink("/me", "My account") }}
+      <div class="nav-group">
+        {% if user.is_admin %}<div class="nav-label">You</div>{% endif %}
+        {{ navlink("/me", "My account", "user") }}
+      </div>
     </nav>
     <div class="account">
       <span class="avatar" aria-hidden="true">{{ user.username[:1] }}</span>
-      <span class="who"><strong>{{ user.username }}</strong><span class="muted">{{ "Administrator" if user.is_admin else "Member" }}</span></span>
+      <span class="who"><strong>{{ user.username }}</strong><span>{{ "Administrator" if user.is_admin else "Member" }}</span></span>
       {{ theme_toggle() }}
       <form method="post" action="/logout">
         <input type="hidden" name="csrf" value="{{ csrf }}">
-        <button class="link" type="submit">Sign out</button>
+        <button class="icon-button" type="submit" aria-label="Sign out" title="Sign out">{{ icon("logout") }}</button>
       </form>
     </div>
   </aside>
-  <main class="sheet"><div class="content">
+  <main class="main"><div class="content">
 {% block content %}{% endblock %}
   </div></main>
 </div>
 {% else %}
-<body class="bare {% block body_class %}{% endblock %}">
-{{ theme_toggle() }}
+<div class="bare-theme">{{ theme_toggle() }}</div>
 <main class="bare-inner">
-  <div class="brand">{{ mark(44, live=true) if self.body_class() == 'login' else mark() }}<span>MCP Gateway</span></div>
+  <div class="brand">{{ mark(24) }}<span>MCP Gateway</span></div>
 {% block bare %}<div class="card">{{ self.content() }}</div>{% endblock %}
 </main>
 {% endif %}
-<script src="/static/app.js"></script>
+<script src="/static/app.js?v={{ asset_v }}"></script>
 </body>
 </html>

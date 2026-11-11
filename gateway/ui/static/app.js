@@ -33,13 +33,13 @@ document.addEventListener("click", async (event) => {
       const data = await res.json();
       const lines = [];
       if (data.ok) {
-        lines.push(`OK — ${data.server_name} ${data.server_version || ""} (protocol ${data.protocol_version})`);
-        lines.push(`${data.tools.length} tool(s):`);
+        lines.push(`Connected to ${data.server_name} ${data.server_version || ""} · protocol ${data.protocol_version}`);
+        lines.push(`${data.tools.length} tool${data.tools.length === 1 ? "" : "s"}`);
         for (const t of data.tools) lines.push(`  • ${t.name}${t.description ? " — " + t.description.split("\n")[0] : ""}`);
       } else {
-        lines.push(`FAILED — ${data.error}`);
+        lines.push(`Failed: ${data.error}`);
       }
-      if (data.log) lines.push("", "Recent stderr:", data.log);
+      if (data.log) lines.push("", "Recent stderr", data.log);
       out.textContent = lines.join("\n");
       if (data.ok) renderTools(data.tools);
       out.dataset.state = data.ok ? "ok" : "fail";

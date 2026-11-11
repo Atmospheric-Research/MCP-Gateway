@@ -1,0 +1,14 @@
+{# One source patched through to three ports: the gateway. #}
+{% macro mark(size=20) %}<svg class="mark" width="{{ size }}" height="{{ size }}" viewBox="0 0 20 20" aria-hidden="true">
+<g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 10C9 10 10 5.5 14.5 5.5"/><path d="M5 10H14.5"/><path d="M5 10C9 10 10 14.5 14.5 14.5"/></g>
+<g fill="currentColor"><circle cx="5" cy="10" r="2"/><rect x="13" y="4" width="3" height="3" rx=".6"/><rect x="13" y="8.5" width="3" height="3" rx=".6"/><rect x="13" y="13" width="3" height="3" rx=".6"/></g>
+</svg>{% endmacro %}
+
+{% macro icon(name) %}<svg class="i" aria-hidden="true"><use href="#i-{{ name }}"/></svg>{% endmacro %}
+
+{# The connector URL with its slug lit. Import "with context" so settings is in scope. #}
+{% macro connector(slug) %}<code>{{ settings.issuer }}/s/<span class="slug">{{ slug }}</span>/mcp</code>{% endmacro %}
+
+{% macro port(slug, label) %}<div class="port">{{ connector(slug) }}<button class="secondary small" type="button" data-copy="{{ settings.resource_url(slug) }}" aria-label="Copy connector URL for {{ label }}">Copy</button></div>{% endmacro %}
+
+{% macro led(on, text, bad=false) %}<span class="led{{ ' on' if on }}{{ ' bad' if bad }}">{{ text }}</span>{% endmacro %}
